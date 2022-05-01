@@ -23,8 +23,6 @@ The `docker-compose.yml` file in this repo has the following services:
 * mysql (has a DB named "inventory" with data)
 * connect (Kafka Connect)
 
-For the scope of this POC, I'm defining a custom network in the `docker-compose.yml` file so that I can assign static IPs to the containers. I found it a good way to get around Kafka connection issues.
-
 ### Start the services
 
 ```bash
