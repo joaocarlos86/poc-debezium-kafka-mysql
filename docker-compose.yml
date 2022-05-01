@@ -50,16 +50,7 @@ services:
     networks:
       debezium_static_network:
         ipv4_address: 10.5.0.8
-  watcher:
-    image: quay.io/debezium/kafka:1.9
-    environment:
-      - ZOOKEEPER_CONNECT=10.5.0.5:2181 
-      - KAFKA_BROKER=10.5.0.6:9092
-    command: watch-topic -a -k dbserver1.inventory.customers
-    networks:
-      debezium_static_network:
-        ipv4_address: 10.5.0.8
-        
+
 networks:
   debezium_static_network:
     driver: bridge
