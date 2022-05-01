@@ -1,0 +1,69 @@
+version: '3.1'
+services:
+  zookeeper:
+    image: quay.io/debezium/zookeeper:1.9
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    networks:
+      debezium_static_network:
+        ipv4_address: 10.5.0.5
+  kafka:
+    image: quay.io/debezium/kafka:1.9
+    environment:
+      - ZOOKEEPER_CONNECT=10.5.0.5:2181
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    networks:
+      debezium_static_network:
+        ipv4_address: 10.5.0.6    
+  mysql:
+    image: quay.io/debezium/example-mysql:1.9
+    environment:
+      - MYSQL_ROOT_PASSWORD=debezium
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+    ports:
+      - 3306:3306
+    depends_on:
+      - kafka
+      - zookeeper
+    networks:
+      debezium_static_network:
+        ipv4_address: 10.5.0.7
+  connect:
+    image: quay.io/debezium/connect:1.9
+    environment:
+      - CONFIG_STORAGE_TOPIC=my_connect_configs 
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets 
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+      - BOOTSTRAP_SERVERS=10.5.0.6:9092
+    ports:
+      - 8083:8083 
+    depends_on:
+      - zookeeper
+      - kafka
+      - mysql
+    networks:
+      debezium_static_network:
+        ipv4_address: 10.5.0.8
+  watcher:
+    image: quay.io/debezium/kafka:1.9
+    environment:
+      - ZOOKEEPER_CONNECT=10.5.0.5:2181 
+      - KAFKA_BROKER=10.5.0.6:9092
+    command: watch-topic -a -k dbserver1.inventory.customers
+    networks:
+      debezium_static_network:
+        ipv4_address: 10.5.0.8
+        
+networks:
+  debezium_static_network:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/16
+         gateway: 10.5.0.1
