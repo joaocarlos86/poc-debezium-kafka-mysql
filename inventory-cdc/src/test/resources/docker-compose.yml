@@ -1,0 +1,34 @@
+version: '3.1'
+services:
+  zookeeper:
+    image: quay.io/debezium/zookeeper:1.9
+  kafka:
+    image: quay.io/debezium/kafka:1.9
+    environment:
+      - ZOOKEEPER_CONNECT=zookeeper:2181
+    depends_on:
+      - zookeeper
+    links:
+      - "zookeeper:zookeeper"
+  mysql:
+    image: quay.io/debezium/example-mysql:1.9
+    environment:
+      - MYSQL_ROOT_PASSWORD=debezium
+      - MYSQL_USER=mysqluser
+      - MYSQL_PASSWORD=mysqlpw
+    depends_on:
+      - kafka
+      - zookeeper
+  connect:
+    image: quay.io/debezium/connect:1.9
+    environment:
+      - CONFIG_STORAGE_TOPIC=my_connect_configs 
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets 
+      - STATUS_STORAGE_TOPIC=my_connect_statuses
+      - BOOTSTRAP_SERVERS=kafka:9092
+    links:
+      - "kafka:kafka"
+    depends_on:
+      - zookeeper
+      - kafka
+      - mysql
