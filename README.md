@@ -45,7 +45,7 @@ curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" 
     "database.server.id": "184054",
     "database.server.name": "dbserver1",
     "database.include.list": "inventory",
-    "database.history.kafka.bootstrap.servers": "10.5.0.6:9092",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
     "database.history.kafka.topic": "dbhistory.inventory"
   }
 }
@@ -61,14 +61,14 @@ curl -i -X GET -H "Accept:application/json" localhost:8083/connectors/
 ### Watch the events
 
 ```bash
-
 # Replace dbserver1.inventory.customers for any other table in the inventory DB (in MySQL).
 
-docker run -it --rm --name watcher \
-    -e ZOOKEEPER_CONNECT=10.5.0.5:2181 \
-    -e KAFKA_BROKER=10.5.0.6:9092 \
-    --network poc-debezium_debezium_static_network \
-    quay.io/debezium/kafka:1.9 watch-topic -a -k dbserver1.inventory.customers
+docker run --tty --rm \
+           --network poc-debezium-kafka-mysql_default \
+           confluentinc/cp-kafkacat \
+           kafkacat -b kafka:9092 -C -K: \
+                    -f '\nKey (%K bytes): %k\t\nValue (%S bytes): %s\n\Partition: %p\tOffset: %o\n--\n' \
+                    -t dbserver1.inventory.customers
 
 ```
 
@@ -77,7 +77,7 @@ docker run -it --rm --name watcher \
 ```bash
 docker run -it --rm --name mysqlterm \
     --link poc-debezium_mysql_1:mysql \
-    --network poc-debezium_debezium_static_network \
+    --network poc-debezium-kafka-mysql_default \
     --rm mysql:8.0 \
     sh -c 'exec mysql -h mysql -P 3306 -uroot -pdebezium'
 ```
