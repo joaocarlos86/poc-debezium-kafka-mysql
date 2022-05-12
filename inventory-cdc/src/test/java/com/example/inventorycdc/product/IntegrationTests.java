@@ -31,7 +31,7 @@ public class IntegrationTests {
     @Container
     public static DockerComposeContainer environment =
             new DockerComposeContainer(new File("src/test/resources/docker-compose.yml"))
-                    .withExposedService("kafka", 9092, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30L)))
+                    .withExposedService("kafka", 9093, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30L)))
                     .withExposedService("mysql", 3306, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30L)))
                     .withExposedService("connect", 8083, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30L)));
 
@@ -44,7 +44,7 @@ public class IntegrationTests {
     }
 
     private static String getKafkaURL() {
-        return "localhost:" + environment.getServicePort("kafka", 9092);
+        return "localhost:" + environment.getServicePort("kafka", 9093);
     }
 
     @Test

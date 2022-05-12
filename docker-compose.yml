@@ -1,25 +1,26 @@
 version: '3.1'
 services:
   zookeeper:
-    image: quay.io/debezium/zookeeper:1.9
+    image: 'bitnami/zookeeper:latest'
     ports:
-      - 2181:2181
-      - 2888:2888
-      - 3888:3888
-    networks:
-      debezium_static_network:
-        ipv4_address: 10.5.0.5
-  kafka:
-    image: quay.io/debezium/kafka:1.9
+      - '2181:2181'
     environment:
-      - ZOOKEEPER_CONNECT=10.5.0.5:2181
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: 'bitnami/kafka:latest'
     ports:
-      - 9092:9092
+      - '9092:9092'
+      - '9093:9093'
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
-      - zookeeper
-    networks:
-      debezium_static_network:
-        ipv4_address: 10.5.0.6    
+      - zookeeper 
   mysql:
     image: quay.io/debezium/example-mysql:1.9
     environment:
@@ -27,34 +28,20 @@ services:
       - MYSQL_USER=mysqluser
       - MYSQL_PASSWORD=mysqlpw
     ports:
-      - 3306:3306
+      - '3306:3306'
     depends_on:
       - kafka
       - zookeeper
-    networks:
-      debezium_static_network:
-        ipv4_address: 10.5.0.7
   connect:
     image: quay.io/debezium/connect:1.9
     environment:
       - CONFIG_STORAGE_TOPIC=my_connect_configs 
       - OFFSET_STORAGE_TOPIC=my_connect_offsets 
       - STATUS_STORAGE_TOPIC=my_connect_statuses
-      - BOOTSTRAP_SERVERS=10.5.0.6:9092
+      - BOOTSTRAP_SERVERS=kafka:9092
     ports:
-      - 8083:8083 
+      - '8083:8083'
     depends_on:
       - zookeeper
       - kafka
       - mysql
-    networks:
-      debezium_static_network:
-        ipv4_address: 10.5.0.8
-
-networks:
-  debezium_static_network:
-    driver: bridge
-    ipam:
-     config:
-       - subnet: 10.5.0.0/16
-         gateway: 10.5.0.1
